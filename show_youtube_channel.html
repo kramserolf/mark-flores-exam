@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+    <style>
+            .rounded-image {
+        border-radius: 50%;
+        width: 100px;
+        height: 100px;
+    }
+    body {
+        background-color: black;
+        color: white;
+    }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container mt-4">
+            <div class="row">
+                <div class="col-md-2 text-center d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+                    <div>
+                        <img v-if="videos.length > 0" :src="videos[0].profile_picture" alt="Profile Picture" class="card-img-top rounded-image border m-2">
+                        <h5>NBA Videos</h5>
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <div class="row">
+                        <div class="col-md-3" v-for="video in paginatedData" :key="video.channel_id">
+                            <div class="card">
+                                <img :src="video.thumbnail" class="card-img-top" alt="video-thumbnail" style="width: 320; height: auto;">
+                                <div class="card-body bg-dark">
+                                    <h6 class="card-title text-white">{{ video.title }}</h6>
+                                    <a :href="video.video_link" class="text-decoration-none" target="_blank">Watch Video</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+            
+            <div class="d-flex justify-content-center m-2">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                      <li class="page-item" v-for="n in Math.ceil(videos.length/itemsPerPage)" :key="n" :class="{ 'active': n === currentPage }">
+                        <a class="page-link" href="#" @click.prevent="changePage(n)">{{ n }}</a>
+                      </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const channelId = urlParams.get('channelId');
+    
+        const app = Vue.createApp({
+          data() {
+            return {
+              videos: [],
+              currentPage: 1,
+              itemsPerPage: 8,
+            };
+          },
+          computed: {
+            paginatedData() {
+                const start = (this.currentPage - 1) * this.itemsPerPage;
+                const end = start + this.itemsPerPage;
+                return this.videos.slice(start, end);
+            },
+            },
+          created() {
+            this.fetchData();
+          },
+          methods: {
+            fetchData() {
+                fetch(`http://localhost/trial/api/youtube_channel_json.php?channelId=${channelId}`)
+                .then(response => response.json())
+                .then(data => {
+                  this.videos = data.videos;
+                })
+                .catch(error => {
+                  console.error('Error fetching data:', error);
+                });
+            },
+            changePage(pageNumber) {
+                this.currentPage = pageNumber;
+            },
+          },
+        });
+    
+        app.mount('#app');
+    </script>
+</body>
+</html>
