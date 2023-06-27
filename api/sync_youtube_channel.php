@@ -58,20 +58,29 @@ try {
         
             $totalVideos += $maxResults;
         }
-        
+
         // Insert video info into the database
-        $insertVideoStmt = $db->prepare('INSERT INTO youtube_channel_videos (channel_id, video_link, title, description, thumbnail) VALUES (?, ?, ?, ?, ?)');
+        $insertVideoStmt = $db->prepare('INSERT INTO youtube_channel_videos (channel_id, video_link, title, description, thumbnail, publishTime) VALUES (?, ?, ?, ?, ?, ?)');
         foreach ($videoData as $video) {
+            $videoTitle = $video['snippet']['title'];
+            
+            if (stripos($videoTitle, '#shorts') !== false || stripos($videoTitle, '#short') !== false) {
+                continue;
+            }
+            
             $videoChannelId = $lastInsertedId;
             $videoLink = 'https://www.youtube.com/watch?v=' . $video['id']['videoId'];
-            $videoTitle = $video['snippet']['title'];
             $videoDescription = $video['snippet']['description'];
             $videoThumbnail = $video['snippet']['thumbnails']['high']['url'];
-        
-            $insertVideoStmt->bind_param('sssss', $videoChannelId, $videoLink, $videoTitle, $videoDescription, $videoThumbnail);
+            $videoPublishTime = str_replace(['T', 'Z'], [' ', ''], $video['snippet']['publishTime']);
+            $insertVideoStmt->bind_param('ssssss', $videoChannelId, $videoLink, $videoTitle, $videoDescription, $videoThumbnail, $videoPublishTime);
             $insertVideoStmt->execute();
+            if ($db->error) {
+                throw new Exception('Database error: ' . $db->error);
+            }
         }
-        $insertVideoStmt->close();        
+        $insertVideoStmt->close(); 
+      
     }
 
     echo json_encode([
@@ -81,9 +90,10 @@ try {
     ]);
 
     $db->close();
-} catch (Exception $e)
-{
-    echo json_encode([
-        'error' => $e->getMessage(),
-    ]);
-}
+
+    } catch (Exception $e)
+    {
+        echo json_encode([
+            'error' => $e->getMessage(),
+        ]);
+    }

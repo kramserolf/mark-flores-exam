@@ -20,7 +20,7 @@
     }
 
     function get_channel_videos($db, $channelId) {
-        $videosStmt = $db->prepare('SELECT youtube_channel_videos.*, youtube_channels.profile_picture FROM youtube_channel_videos 
+        $videosStmt = $db->prepare('SELECT youtube_channel_videos.*, youtube_channels.profile_picture, youtube_channels.description, youtube_channels.name FROM youtube_channel_videos 
         INNER JOIN youtube_channels ON youtube_channels.id = youtube_channel_videos.channel_id WHERE channel_id = ?');
         $videosStmt->bind_param('s', $channelId);
         $videosStmt->execute();
